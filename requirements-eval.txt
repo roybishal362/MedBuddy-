@@ -1,0 +1,6 @@
+# MedBuddy — Evaluation-only dependencies.
+# NOT required to run the app. Install locally for `python evaluation/eval_pipeline.py`:
+#   pip install -r requirements.txt -r requirements-eval.txt
+rouge-score>=0.1.2
+bert-score>=0.3.13
+jiwer>=3.0.0

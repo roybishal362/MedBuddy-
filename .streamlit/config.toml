@@ -1,0 +1,16 @@
+# Streamlit configuration for MedBuddy
+# Theme is tuned to match the app's dark gradient UI.
+
+[theme]
+base = "dark"
+primaryColor = "#6366f1"
+backgroundColor = "#0f0f23"
+secondaryBackgroundColor = "#1a1a3e"
+textColor = "#e5e7eb"
+
+[server]
+# Allow larger lab-report PDFs (in MB).
+maxUploadSize = 25
+
+[browser]
+gatherUsageStats = false

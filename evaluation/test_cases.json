@@ -1,0 +1,294 @@
+[
+  {
+    "id": "mode1_term_01",
+    "type": "mode1_term",
+    "input": "Hemoglobin",
+    "expected_intent": "MEDICAL_TERM",
+    "reference_explanation": "Hemoglobin is a protein in red blood cells that carries oxygen throughout your body.",
+    "expected_source_tier": "FAISS"
+  },
+  {
+    "id": "mode1_term_02",
+    "type": "mode1_term",
+    "input": "HbA1c",
+    "expected_intent": "MEDICAL_TERM",
+    "reference_explanation": "HbA1c (glycated hemoglobin) measures your average blood sugar levels over the past 2-3 months.",
+    "expected_source_tier": "FAISS"
+  },
+  {
+    "id": "mode1_term_03",
+    "type": "mode1_term",
+    "input": "eGFR",
+    "expected_intent": "MEDICAL_TERM",
+    "reference_explanation": "eGFR estimates how well your kidneys filter waste from your blood.",
+    "expected_source_tier": "FAISS"
+  },
+  {
+    "id": "mode1_term_04",
+    "type": "mode1_term",
+    "input": "LDL Cholesterol",
+    "expected_intent": "MEDICAL_TERM",
+    "reference_explanation": "LDL is often called 'bad' cholesterol. High levels can lead to plaque buildup in arteries.",
+    "expected_source_tier": "FAISS"
+  },
+  {
+    "id": "mode1_term_05",
+    "type": "mode1_term",
+    "input": "TSH",
+    "expected_intent": "MEDICAL_TERM",
+    "reference_explanation": "TSH (Thyroid Stimulating Hormone) controls how much thyroid hormone your thyroid gland produces.",
+    "expected_source_tier": "FAISS"
+  },
+  {
+    "id": "mode1_term_06",
+    "type": "mode1_term",
+    "input": "Creatinine",
+    "expected_intent": "MEDICAL_TERM",
+    "reference_explanation": "Creatinine is a waste product from muscle metabolism filtered by your kidneys.",
+    "expected_source_tier": "FAISS"
+  },
+  {
+    "id": "mode1_term_07",
+    "type": "mode1_term",
+    "input": "Platelet Count",
+    "expected_intent": "MEDICAL_TERM",
+    "reference_explanation": "Platelets help your blood clot. The count measures how many platelets are in your blood.",
+    "expected_source_tier": "FAISS"
+  },
+  {
+    "id": "mode1_term_08",
+    "type": "mode1_term",
+    "input": "Vitamin D",
+    "expected_intent": "MEDICAL_TERM",
+    "reference_explanation": "Vitamin D helps your body absorb calcium and is important for bone health.",
+    "expected_source_tier": "FAISS"
+  },
+  {
+    "id": "mode1_term_09",
+    "type": "mode1_term",
+    "input": "ALT",
+    "expected_intent": "MEDICAL_TERM",
+    "reference_explanation": "ALT is an enzyme found mainly in the liver. High levels may indicate liver damage.",
+    "expected_source_tier": "FAISS"
+  },
+  {
+    "id": "mode1_term_10",
+    "type": "mode1_term",
+    "input": "Ferritin",
+    "expected_intent": "MEDICAL_TERM",
+    "reference_explanation": "Ferritin is a protein that stores iron. Low levels may indicate iron deficiency.",
+    "expected_source_tier": "FAISS"
+  },
+  {
+    "id": "mode2_digital_01",
+    "type": "mode2_digital",
+    "description": "Digital report entity — Hemoglobin low",
+    "entity": { "term": "Hemoglobin", "patient_value": "11.2", "unit": "g/dL", "reference_range": "13.5-17.5", "reference_low": 13.5, "reference_high": 17.5 },
+    "expected_flag": "CRITICAL"
+  },
+  {
+    "id": "mode2_digital_02",
+    "type": "mode2_digital",
+    "description": "Digital report entity — WBC normal",
+    "entity": { "term": "WBC", "patient_value": "7.2", "unit": "K/μL", "reference_range": "4.0-11.0", "reference_low": 4.0, "reference_high": 11.0 },
+    "expected_flag": "NORMAL"
+  },
+  {
+    "id": "mode2_digital_03",
+    "type": "mode2_digital",
+    "description": "Digital report entity — Blood Sugar borderline",
+    "entity": { "term": "Fasting Blood Sugar", "patient_value": "108", "unit": "mg/dL", "reference_range": "70-100", "reference_low": 70.0, "reference_high": 100.0 },
+    "expected_flag": "BORDERLINE"
+  },
+  {
+    "id": "mode2_digital_04",
+    "type": "mode2_digital",
+    "description": "Digital report entity — Creatinine normal",
+    "entity": { "term": "Creatinine", "patient_value": "0.9", "unit": "mg/dL", "reference_range": "0.7-1.3", "reference_low": 0.7, "reference_high": 1.3 },
+    "expected_flag": "NORMAL"
+  },
+  {
+    "id": "mode2_digital_05",
+    "type": "mode2_digital",
+    "description": "Digital report entity — Cholesterol borderline",
+    "entity": { "term": "Total Cholesterol", "patient_value": "215", "unit": "mg/dL", "reference_range": "0-200", "reference_low": 0.0, "reference_high": 200.0 },
+    "expected_flag": "BORDERLINE"
+  },
+  {
+    "id": "mode2_digital_06",
+    "type": "mode2_digital",
+    "description": "Digital report entity — TSH normal",
+    "entity": { "term": "TSH", "patient_value": "2.5", "unit": "mIU/L", "reference_range": "0.4-4.0", "reference_low": 0.4, "reference_high": 4.0 },
+    "expected_flag": "NORMAL"
+  },
+  {
+    "id": "mode2_digital_07",
+    "type": "mode2_digital",
+    "description": "Digital report entity — ALT elevated",
+    "entity": { "term": "ALT", "patient_value": "85", "unit": "U/L", "reference_range": "7-56", "reference_low": 7.0, "reference_high": 56.0 },
+    "expected_flag": "CRITICAL"
+  },
+  {
+    "id": "mode2_digital_08",
+    "type": "mode2_digital",
+    "description": "Digital report entity — Vitamin D low",
+    "entity": { "term": "Vitamin D", "patient_value": "18", "unit": "ng/mL", "reference_range": "30-100", "reference_low": 30.0, "reference_high": 100.0 },
+    "expected_flag": "CRITICAL"
+  },
+  {
+    "id": "mode2_digital_09",
+    "type": "mode2_digital",
+    "description": "Digital report entity — Platelet normal",
+    "entity": { "term": "Platelet Count", "patient_value": "250", "unit": "K/μL", "reference_range": "150-400", "reference_low": 150.0, "reference_high": 400.0 },
+    "expected_flag": "NORMAL"
+  },
+  {
+    "id": "mode2_digital_10",
+    "type": "mode2_digital",
+    "description": "Digital report entity — HbA1c borderline",
+    "entity": { "term": "HbA1c", "patient_value": "6.2", "unit": "%", "reference_range": "4.0-5.7", "reference_low": 4.0, "reference_high": 5.7 },
+    "expected_flag": "BORDERLINE"
+  },
+  {
+    "id": "mode2_ocr_01",
+    "type": "mode2_ocr",
+    "description": "OCR entity — Hemoglobin from scanned report",
+    "entity": { "term": "Hemoglobin", "patient_value": "14.5", "unit": "g/dL", "reference_range": "13.5-17.5", "reference_low": 13.5, "reference_high": 17.5 },
+    "expected_flag": "NORMAL"
+  },
+  {
+    "id": "mode2_ocr_02",
+    "type": "mode2_ocr",
+    "description": "OCR entity — RBC from scanned report",
+    "entity": { "term": "RBC Count", "patient_value": "5.2", "unit": "10^6/μL", "reference_range": "4.5-5.5", "reference_low": 4.5, "reference_high": 5.5 },
+    "expected_flag": "NORMAL"
+  },
+  {
+    "id": "mode2_ocr_03",
+    "type": "mode2_ocr",
+    "description": "OCR entity — Uric Acid high",
+    "entity": { "term": "Uric Acid", "patient_value": "9.5", "unit": "mg/dL", "reference_range": "3.5-7.2", "reference_low": 3.5, "reference_high": 7.2 },
+    "expected_flag": "CRITICAL"
+  },
+  {
+    "id": "mode2_ocr_04",
+    "type": "mode2_ocr",
+    "description": "OCR entity — Triglycerides borderline",
+    "entity": { "term": "Triglycerides", "patient_value": "165", "unit": "mg/dL", "reference_range": "0-150", "reference_low": 0.0, "reference_high": 150.0 },
+    "expected_flag": "BORDERLINE"
+  },
+  {
+    "id": "mode2_ocr_05",
+    "type": "mode2_ocr",
+    "description": "OCR entity — ESR elevated",
+    "entity": { "term": "ESR", "patient_value": "35", "unit": "mm/hr", "reference_range": "0-20", "reference_low": 0.0, "reference_high": 20.0 },
+    "expected_flag": "CRITICAL"
+  },
+  {
+    "id": "mode2_ocr_06",
+    "type": "mode2_ocr",
+    "description": "OCR entity — Calcium normal",
+    "entity": { "term": "Calcium", "patient_value": "9.4", "unit": "mg/dL", "reference_range": "8.5-10.5", "reference_low": 8.5, "reference_high": 10.5 },
+    "expected_flag": "NORMAL"
+  },
+  {
+    "id": "mode2_ocr_07",
+    "type": "mode2_ocr",
+    "description": "OCR entity — Potassium normal",
+    "entity": { "term": "Potassium", "patient_value": "4.2", "unit": "mEq/L", "reference_range": "3.5-5.0", "reference_low": 3.5, "reference_high": 5.0 },
+    "expected_flag": "NORMAL"
+  },
+  {
+    "id": "mode2_ocr_08",
+    "type": "mode2_ocr",
+    "description": "OCR entity — Sodium normal",
+    "entity": { "term": "Sodium", "patient_value": "140", "unit": "mEq/L", "reference_range": "136-145", "reference_low": 136.0, "reference_high": 145.0 },
+    "expected_flag": "NORMAL"
+  },
+  {
+    "id": "mode2_ocr_09",
+    "type": "mode2_ocr",
+    "description": "OCR entity — Iron low",
+    "entity": { "term": "Iron", "patient_value": "40", "unit": "μg/dL", "reference_range": "60-170", "reference_low": 60.0, "reference_high": 170.0 },
+    "expected_flag": "CRITICAL"
+  },
+  {
+    "id": "mode2_ocr_10",
+    "type": "mode2_ocr",
+    "description": "OCR entity — Albumin normal",
+    "entity": { "term": "Albumin", "patient_value": "4.2", "unit": "g/dL", "reference_range": "3.5-5.0", "reference_low": 3.5, "reference_high": 5.0 },
+    "expected_flag": "NORMAL"
+  },
+  {
+    "id": "oov_01",
+    "type": "out_of_vocabulary",
+    "input": "Anti-Mullerian Hormone",
+    "description": "May not be in KB — tests Tier 2/3 fallback",
+    "expected_intent": "MEDICAL_TERM"
+  },
+  {
+    "id": "oov_02",
+    "type": "out_of_vocabulary",
+    "input": "Cystatin C",
+    "description": "Specialized renal marker — may test Tier 2",
+    "expected_intent": "MEDICAL_TERM"
+  },
+  {
+    "id": "oov_03",
+    "type": "out_of_vocabulary",
+    "input": "Procalcitonin",
+    "description": "Infection marker — may need live fetch",
+    "expected_intent": "MEDICAL_TERM"
+  },
+  {
+    "id": "oov_04",
+    "type": "out_of_vocabulary",
+    "input": "Small Dense LDL",
+    "description": "Advanced lipid marker — tests Tier 3 fallback",
+    "expected_intent": "MEDICAL_TERM"
+  },
+  {
+    "id": "oov_05",
+    "type": "out_of_vocabulary",
+    "input": "Serum Free Light Chains",
+    "description": "Oncology marker — tests Tier 2/3",
+    "expected_intent": "MEDICAL_TERM"
+  },
+  {
+    "id": "edge_01",
+    "type": "edge_case",
+    "input": "haemoglobin",
+    "description": "Misspelling / British spelling",
+    "expected_intent": "MEDICAL_TERM",
+    "expected_normalized": "Hemoglobin"
+  },
+  {
+    "id": "edge_02",
+    "type": "edge_case",
+    "input": "Do I have diabetes?",
+    "description": "Out-of-scope diagnosis request",
+    "expected_intent": "OUT_OF_SCOPE"
+  },
+  {
+    "id": "edge_03",
+    "type": "edge_case",
+    "input": "What medicine should I take for high cholesterol?",
+    "description": "Out-of-scope treatment request",
+    "expected_intent": "OUT_OF_SCOPE"
+  },
+  {
+    "id": "edge_04",
+    "type": "edge_case",
+    "entity": { "term": "Hemoglobin", "patient_value": "3.0", "unit": "g/dL", "reference_range": "13.5-17.5", "reference_low": 13.5, "reference_high": 17.5 },
+    "description": "Extreme low value — CRITICAL flag",
+    "expected_flag": "CRITICAL"
+  },
+  {
+    "id": "edge_05",
+    "type": "edge_case",
+    "input": "हीमोग्लोबिन क्या होता है",
+    "description": "Hindi language query",
+    "expected_intent": "MEDICAL_TERM",
+    "language": "Hindi"
+  }
+]
