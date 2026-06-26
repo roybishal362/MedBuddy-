@@ -359,6 +359,17 @@ def parse_value_unit(text: str):
     return m.group(1), (m.group(2) or "").strip()
 
 
+def _use_example_term(term: str):
+    """Click handler for example-term chips: fill the search box and run it.
+
+    Runs as an on_click callback (before widgets are re-instantiated), which is
+    the supported way to set a widget's value programmatically in Streamlit.
+    """
+    st.session_state["term_input"] = term
+    st.session_state["term_value_input"] = ""
+    st.session_state["run_example"] = True
+
+
 def get_flag_html(flag: str, labels: dict) -> str:
     """Return styled HTML for a flag badge."""
     flag_map = {
@@ -525,26 +536,36 @@ with tab1:
     with col3:
         explain_clicked = st.button(labels["explain_button"], key="explain_btn", use_container_width=True)
 
-    # Empty state with example terms (presentation only)
-    if not (explain_clicked and term_input):
-        _examples = ["Hemoglobin", "HbA1c", "eGFR", "LDL Cholesterol", "TSH", "Vitamin D", "Creatinine"]
-        _chips = "".join(f'<span class="mb-chip">{_t}</span>' for _t in _examples)
+    # Trigger: explicit Explain button OR an example-term chip click
+    _chip_run = st.session_state.pop("run_example", False)
+    _do_explain = bool((explain_clicked or _chip_run) and term_input)
+
+    # Empty state + clickable example terms
+    if not _do_explain:
         _et_title = "Ask about any lab term" if language == "English" else "किसी भी लैब शब्द के बारे में पूछें"
         _et_text = (
-            "Type a test name above and MedBuddy explains it in plain language, grounded in MedlinePlus."
+            "Type a test name above (or tap an example) and MedBuddy explains it in plain language."
             if language == "English"
-            else "ऊपर कोई जांच नाम लिखें — MedBuddy इसे सरल भाषा में समझाएगा।"
+            else "ऊपर कोई जांच नाम लिखें (या उदाहरण पर टैप करें) — MedBuddy इसे सरल भाषा में समझाएगा।"
         )
         st.markdown(f"""
         <div class="mb-empty">
             <div class="mb-empty-icon">🔍</div>
             <div class="mb-empty-title">{_et_title}</div>
             <div class="mb-empty-text">{_et_text}</div>
-            <div class="mb-chips">{_chips}</div>
         </div>
         """, unsafe_allow_html=True)
 
-    if explain_clicked and term_input:
+        _examples = ["Hemoglobin", "HbA1c", "eGFR", "LDL Cholesterol", "TSH", "Vitamin D", "Creatinine"]
+        _ex_cols = st.columns(len(_examples))
+        for _c, _t in zip(_ex_cols, _examples):
+            _c.button(
+                _t, key=f"ex_{_t}",
+                on_click=_use_example_term, args=(_t,),
+                use_container_width=True
+            )
+
+    if _do_explain:
         with st.spinner("🔍 Analyzing..." if language == "English" else "🔍 विश्लेषण कर रहे हैं..."):
             # Step 1: Classify intent
             classification = classify(term_input)

@@ -29,3 +29,6 @@ Thumbs.db
 
 # ─── Evaluation artifacts ──────────────────────────────────────────
 evaluation/results/
+
+# ─── Local-only demo reports (never commit) ────────────────────────
+demo_reports/
