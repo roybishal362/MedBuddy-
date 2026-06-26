@@ -3,7 +3,7 @@
 **Conversational AI for Medical Report Simplification**
 
 MedBuddy helps patients understand their medical lab reports in plain language using AI-powered simplification, OCR for scanned reports, and a 3-tier RAG knowledge retrieval system.
-
+https://mhappaporuchxxakx5cbmjn.streamlit.app/
 ## Features
 
 - **Mode 1 — Ask a Term**: Query any medical term and get a plain-language explanation
