@@ -193,6 +193,43 @@ Write a brief explanation. Begin your response with:
 
 Do NOT diagnose or recommend treatment."""
 
+# Dictionary-Style Term Explanation (Mode 1, no patient value) — RAG-grounded
+TERM_DICTIONARY_PROMPT = """System: You are MedBuddy, explaining a medical lab test to a patient who simply asked what it means — like a friendly medical dictionary. The patient has NOT given their own result value, so do NOT refer to "your result", do NOT invent a patient value, and do NOT ask them for one.
+
+Context (from MedlinePlus):
+{retrieved_context}
+
+Medical term: {term}
+
+Literacy Level instruction: {literacy_level_description}
+Language: {language}
+
+Write a clear, compassionate explanation covering:
+1. What this test measures and why it is done (1-2 simple sentences)
+2. The typical normal / reference range for a healthy adult. If the context provides a range, use it. Otherwise give the commonly used adult range and note that ranges vary by lab, age, and sex.
+3. A simple analogy ONLY if it genuinely aids understanding (optional).
+
+Do NOT: diagnose, recommend medication or treatment, or invent a patient result.
+Prefer information supported by the context above.
+Respond in {language} only."""
+
+# Dictionary-Style Term Explanation (Mode 1, no patient value) — Tier 3 fallback
+TERM_DICTIONARY_FALLBACK_PROMPT = """System: You are MedBuddy, a medical communication specialist explaining a lab test like a friendly dictionary. The patient has NOT given a result value, so do NOT refer to a patient-specific value or ask for one.
+This term was not found in the verified knowledge base. Provide a careful general explanation from your knowledge.
+
+Medical term: {term}
+Literacy Level: {literacy_level_description}
+Language: {language}
+
+Begin your response with:
+"[Note: This explanation is based on general medical knowledge and has not been verified against a certified source. Please confirm with your doctor.]"
+
+Then cover:
+1. What this test measures and why it is done (simple)
+2. The typical normal / reference range for a healthy adult (note that ranges vary by lab, age, and sex)
+
+Do NOT diagnose or recommend treatment. Respond in {language} only."""
+
 # Hallucination Verification Prompt
 HALLUCINATION_VERIFICATION_PROMPT = """You are a medical fact-checker. You receive a retrieved medical context and a generated patient explanation.
 
@@ -251,7 +288,7 @@ UI_LABELS = {
         "tab2_title": "📄 Upload Report",
         "term_input_placeholder": "Enter a medical term (e.g. Hemoglobin, eGFR, HbA1c)...",
         "explain_button": "Explain",
-        "upload_label": "Upload your lab report (PDF)",
+        "upload_label": "Upload your lab report (PDF or image)",
         "analyze_button": "🔬 Analyze Report",
         "analyzing_msg": "Reading your report...",
         "summary_header": "📊 Your Report Summary",
@@ -290,7 +327,7 @@ UI_LABELS = {
         "tab2_title": "📄 रिपोर्ट अपलोड करें",
         "term_input_placeholder": "एक मेडिकल शब्द दर्ज करें (जैसे हीमोग्लोबिन, eGFR, HbA1c)...",
         "explain_button": "समझाएं",
-        "upload_label": "अपनी लैब रिपोर्ट अपलोड करें (PDF)",
+        "upload_label": "अपनी लैब रिपोर्ट अपलोड करें (PDF या इमेज)",
         "analyze_button": "🔬 रिपोर्ट का विश्लेषण करें",
         "analyzing_msg": "आपकी रिपोर्ट पढ़ रहे हैं...",
         "summary_header": "📊 आपकी रिपोर्ट का सारांश",

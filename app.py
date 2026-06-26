@@ -6,6 +6,7 @@ import streamlit as st
 import os
 import sys
 import json
+import re
 import tempfile
 
 # Add project root to path
@@ -18,9 +19,9 @@ from config.settings import (
 from core.intent_classifier import classify
 from core.refusal_handler import handle_refusal, handle_report_redirect
 from core.rag_retriever import retrieve
-from core.adaptive_explainer import explain
+from core.adaptive_explainer import explain, explain_term
 from core.hallucination_verifier import verify
-from core.document_intelligence import extract
+from core.document_intelligence import extract, extract_image
 from core.report_analyzer import analyze
 from core.report_summarizer import summarize
 from core.entity_extractor import extract_entities
@@ -337,6 +338,20 @@ if "report_text" not in st.session_state:
     st.session_state.report_text = ""
 
 
+def parse_value_unit(text: str):
+    """Pull a numeric value (and optional unit) out of a short free-text string.
+
+    Used only by Mode 1's optional value box, e.g. "11.5", "11.5 g/dL".
+    Returns ("", "") when no number is present.
+    """
+    if not text or not str(text).strip():
+        return "", ""
+    m = re.search(r'(\d+\.?\d*)\s*([A-Za-zµ%/\^0-9\.\-]*)', str(text))
+    if not m:
+        return "", ""
+    return m.group(1), (m.group(2) or "").strip()
+
+
 def get_flag_html(flag: str, labels: dict) -> str:
     """Return styled HTML for a flag badge."""
     flag_map = {
@@ -484,7 +499,8 @@ tab1, tab2 = st.tabs([labels["tab1_title"], labels["tab2_title"]])
 with tab1:
     st.markdown("### " + labels["tab1_title"])
 
-    col1, col2 = st.columns([4, 1])
+    _value_ph = "Your value (optional)" if language == "English" else "आपका मान (वैकल्पिक)"
+    col1, col2, col3 = st.columns([3, 1.5, 1])
     with col1:
         term_input = st.text_input(
             "term_query",
@@ -493,6 +509,13 @@ with tab1:
             key="term_input"
         )
     with col2:
+        value_input = st.text_input(
+            "term_value",
+            placeholder=_value_ph,
+            label_visibility="collapsed",
+            key="term_value_input"
+        )
+    with col3:
         explain_clicked = st.button(labels["explain_button"], key="explain_btn", use_container_width=True)
 
     # Empty state with example terms (presentation only)
@@ -529,12 +552,19 @@ with tab1:
             elif intent == "MEDICAL_TERM":
                 normalized = classification.get("normalized_term", term_input)
 
+                # Optional value the user typed (dictionary mode if absent)
+                _val, _unit = parse_value_unit(value_input)
+
                 # Step 2: RAG retrieval
                 rag_result = retrieve(normalized)
 
                 # Step 3: Generate explanation
-                explain_result = explain(
+                #   - no value -> dictionary entry (what it is + normal range)
+                #   - value given -> also interpret that number
+                explain_result = explain_term(
                     term=normalized,
+                    value=_val,
+                    unit=_unit,
                     rag_result=rag_result,
                     literacy_level=literacy_level,
                     language=language
@@ -549,9 +579,10 @@ with tab1:
                     )
 
                 # ─── Display Result Card ────────────────────────────
+                _head = f"{normalized} = {_val} {_unit}".strip() if _val else normalized
                 st.markdown(f"""
                 <div class="summary-card">
-                    <h3>📋 {normalized}</h3>
+                    <h3>📋 {_head}</h3>
                     <hr style="border-color: rgba(100,100,255,0.2);">
                     <p>{explain_result['explanation']}</p>
                 """, unsafe_allow_html=True)
@@ -600,9 +631,15 @@ with tab1:
 with tab2:
     st.markdown("### " + labels["tab2_title"])
 
+    _upload_help = (
+        "PDF, or a clear photo / scan of the report (PNG, JPG)."
+        if language == "English"
+        else "PDF, या रिपोर्ट की साफ़ फ़ोटो / स्कैन (PNG, JPG)।"
+    )
     uploaded_file = st.file_uploader(
         labels["upload_label"],
-        type=["pdf"],
+        type=["pdf", "png", "jpg", "jpeg", "webp", "bmp", "tiff"],
+        help=_upload_help,
         key="pdf_uploader"
     )
 
@@ -615,23 +652,36 @@ with tab2:
         st.session_state.conversation_memory.clear()
 
         with st.spinner(labels["analyzing_msg"]):
-            # Save uploaded file temporarily
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            # Save uploaded file temporarily (preserve original extension)
+            _ext = os.path.splitext(uploaded_file.name)[1].lower() or ".pdf"
+            with tempfile.NamedTemporaryFile(delete=False, suffix=_ext) as tmp:
                 tmp.write(uploaded_file.read())
                 tmp_path = tmp.name
 
+            _is_image = _ext in (".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tiff", ".tif")
+
             try:
                 # ─── STEP 1: Document Intelligence ──────────────────
-                doc_result = extract(tmp_path)
+                # Images go through the OCR-only path; PDFs use the full pipeline.
+                doc_result = extract_image(tmp_path) if _is_image else extract(tmp_path)
 
                 if not doc_result.get("success", False) or not doc_result.get("text", "").strip():
-                    st.error(
-                        "❌ Could not extract text from this PDF. Possible reasons:\n"
-                        "- The PDF is a scanned image (needs OCR dependencies: Tesseract + Poppler)\n"
-                        "- The PDF is encrypted or password-protected\n"
-                        "- The file is corrupted\n\n"
-                        "**Fix:** Install Tesseract and Poppler, or try uploading a digital PDF."
-                    )
+                    if _is_image:
+                        st.error(
+                            "❌ Could not read text from this image. Tips:\n"
+                            "- Use a sharp, well-lit, straight-on photo or scan\n"
+                            "- Make sure the text is in focus and not too small\n"
+                            "- Avoid glare, shadows, and heavy cropping\n\n"
+                            "You can also try uploading the report as a PDF."
+                        )
+                    else:
+                        st.error(
+                            "❌ Could not extract text from this PDF. Possible reasons:\n"
+                            "- The PDF is a scanned image and OCR could not read it\n"
+                            "- The PDF is encrypted or password-protected\n"
+                            "- The file is corrupted\n\n"
+                            "**Fix:** Try a clearer scan, or upload the report as an image (PNG/JPG)."
+                        )
                     st.stop()
 
                 report_text = doc_result["text"]
@@ -719,8 +769,8 @@ with tab2:
     elif not st.session_state.report_analyzed and not (analyze_clicked and uploaded_file):
         if language == "English":
             _u_title = "Upload a lab report to begin"
-            _u_text = "MedBuddy reads digital or scanned PDFs, flags each value, and explains your results — then answers your questions."
-            _u_steps = ["1 · Upload PDF", "2 · Instant summary", "3 · Ask questions"]
+            _u_text = "MedBuddy reads PDFs or photos of your report, flags each value, and explains your results — then answers your questions."
+            _u_steps = ["1 · Upload PDF / image", "2 · Instant summary", "3 · Ask questions"]
         else:
             _u_title = "शुरू करने के लिए रिपोर्ट अपलोड करें"
             _u_text = "MedBuddy डिजिटल या स्कैन की गई PDF पढ़ता है, हर मान को फ़्लैग करता है और आपके परिणाम समझाता है।"

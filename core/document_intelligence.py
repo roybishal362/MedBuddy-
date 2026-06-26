@@ -7,7 +7,7 @@ import re
 import fitz  # PyMuPDF
 import pdfplumber
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageOps
 
 # Optional OCR imports — gracefully handle missing system dependencies
 try:
@@ -282,6 +282,71 @@ def extract(pdf_path: str) -> dict:
         "method": method,
         "tables": ocr_tables,
         "page_count": page_count,
+        "success": True
+    }
+
+
+def extract_image(image_path: str) -> dict:
+    """
+    Extract text from an uploaded image (PNG/JPG/etc.) via OCR.
+    Mirrors extract()'s return shape so the app pipeline is unchanged downstream.
+    """
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"Image not found: {image_path}")
+
+    if not PYTESSERACT_AVAILABLE:
+        return {
+            "text": "",
+            "method": "ocr",
+            "tables": [],
+            "page_count": 1,
+            "success": False
+        }
+
+    # Load image, fix phone-photo orientation (EXIF), normalize to RGB
+    try:
+        img = Image.open(image_path)
+        img = ImageOps.exif_transpose(img)
+        img = img.convert("RGB")
+    except Exception as e:
+        print(f"[DocumentIntelligence] Image open error: {e}")
+        return {
+            "text": "",
+            "method": "ocr",
+            "tables": [],
+            "page_count": 1,
+            "success": False
+        }
+
+    # Same OpenCV preprocessing + Tesseract pass used for scanned PDFs
+    processed = preprocess_image_for_ocr(img)
+
+    ocr_text = ""
+    try:
+        ocr_text = pytesseract.image_to_string(processed, lang="eng+hin", config="--psm 6")
+    except Exception:
+        try:
+            ocr_text = pytesseract.image_to_string(processed, lang="eng", config="--psm 6")
+        except Exception as e:
+            print(f"[DocumentIntelligence] Image OCR Error: {e}")
+
+    final_text = ocr_text.strip()
+    if not final_text:
+        return {
+            "text": "",
+            "method": "ocr",
+            "tables": [],
+            "page_count": 1,
+            "success": False
+        }
+
+    ocr_tables = extract_tables_from_ocr_text(final_text)
+
+    return {
+        "text": final_text,
+        "method": "ocr",
+        "tables": ocr_tables,
+        "page_count": 1,
         "success": True
     }
 
