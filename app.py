@@ -161,6 +161,164 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ─── Presentation polish (additive — no logic touched) ─────────────
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    html, body, [class*="css"], .stApp, button, input, textarea {
+        font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+    }
+
+    .block-container { padding-top: 2.2rem; max-width: 1180px; }
+
+    /* ── Hero header ──────────────────────────────────────────── */
+    .mb-hero {
+        background:
+            radial-gradient(1200px 200px at 15% -40%, rgba(99,102,241,0.35), transparent 60%),
+            linear-gradient(135deg, rgba(30,30,80,0.85), rgba(15,15,40,0.92));
+        border: 1px solid rgba(129,140,248,0.28);
+        border-radius: 22px;
+        padding: 30px 34px;
+        margin: 4px 0 22px 0;
+        box-shadow: 0 12px 48px rgba(0,0,0,0.35);
+        animation: mbFadeUp .55s ease-out both;
+    }
+    .mb-hero-row { display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+    .mb-logo {
+        width: 60px; height: 60px; min-width:60px;
+        border-radius: 18px;
+        display:flex; align-items:center; justify-content:center;
+        font-size: 32px;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        box-shadow: 0 8px 24px rgba(99,102,241,0.45);
+    }
+    .mb-hero-title {
+        font-size: 2.5em; font-weight: 800; line-height: 1.05; margin: 0;
+        background: linear-gradient(135deg, #c7d2fe, #818cf8, #6366f1);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .mb-hero-sub { color: #b9c0e0; font-size: 1.02em; margin: 4px 0 0 0; }
+
+    /* ── Trust strip ──────────────────────────────────────────── */
+    .mb-trust { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+    .mb-trust-item {
+        display:inline-flex; align-items:center; gap:7px;
+        background: rgba(99,102,241,0.12);
+        border: 1px solid rgba(129,140,248,0.22);
+        color: #cdd3f0; font-size: 0.82em; font-weight:500;
+        padding: 6px 13px; border-radius: 999px;
+    }
+
+    /* ── Summary stat cards ───────────────────────────────────── */
+    .mb-stat-grid {
+        display:grid; grid-template-columns: repeat(4, 1fr);
+        gap: 14px; margin: 6px 0 20px 0;
+    }
+    @media (max-width: 720px){ .mb-stat-grid { grid-template-columns: repeat(2, 1fr); } }
+    .mb-stat {
+        background: linear-gradient(160deg, rgba(30,30,75,0.75), rgba(18,18,52,0.85));
+        border: 1px solid rgba(129,140,248,0.18);
+        border-radius: 16px; padding: 16px 18px;
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        animation: mbFadeUp .5s ease-out both;
+    }
+    .mb-stat:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.35); }
+    .mb-stat-num { font-size: 2.1em; font-weight: 800; line-height: 1; }
+    .mb-stat-label { font-size: .82em; color: #aab1d6; margin-top: 6px; letter-spacing:.02em; }
+    .mb-stat.total   { border-color: rgba(129,140,248,0.35); }
+    .mb-stat.total   .mb-stat-num   { color: #a5b4fc; }
+    .mb-stat.normal  .mb-stat-num   { color: #34d399; }
+    .mb-stat.normal:hover  { border-color: rgba(52,211,153,0.5); }
+    .mb-stat.border  .mb-stat-num   { color: #fbbf24; }
+    .mb-stat.border:hover  { border-color: rgba(251,191,36,0.5); }
+    .mb-stat.crit    .mb-stat-num   { color: #f87171; }
+    .mb-stat.crit:hover    { border-color: rgba(248,113,113,0.55); }
+
+    /* ── Empty states ─────────────────────────────────────────── */
+    .mb-empty {
+        text-align:center; padding: 40px 24px;
+        border: 1px dashed rgba(129,140,248,0.28);
+        border-radius: 18px;
+        background: rgba(20,20,55,0.4);
+        margin: 14px 0;
+    }
+    .mb-empty-icon { font-size: 2.6em; opacity:.9; }
+    .mb-empty-title { font-size: 1.15em; font-weight:700; color:#e5e7eb; margin: 8px 0 4px; }
+    .mb-empty-text { color:#9aa2c8; font-size: .92em; max-width: 440px; margin: 0 auto; }
+    .mb-chips { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:16px; }
+    .mb-chip {
+        background: rgba(99,102,241,0.14);
+        border: 1px solid rgba(129,140,248,0.25);
+        color:#c7cdf0; font-size:.82em; font-weight:500;
+        padding: 5px 12px; border-radius: 999px;
+    }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    .mb-footer {
+        margin: 40px 0 6px; padding-top: 18px;
+        border-top: 1px solid rgba(129,140,248,0.15);
+        text-align:center; color:#8088ad; font-size: .82em; line-height:1.7;
+    }
+    .mb-footer b { color:#aab1d6; }
+
+    /* ── Card hover / entrance ────────────────────────────────── */
+    .summary-card, .result-card { animation: mbFadeUp .5s ease-out both; }
+    .result-card { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+    .result-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(129,140,248,0.4);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    /* ── Buttons ──────────────────────────────────────────────── */
+    .stButton > button {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: #fff; border: none; border-radius: 12px;
+        font-weight: 600; padding: 0.55rem 1rem;
+        transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+        box-shadow: 0 6px 18px rgba(79,70,229,0.35);
+    }
+    .stButton > button:hover {
+        transform: translateY(-2px); filter: brightness(1.07);
+        box-shadow: 0 10px 26px rgba(79,70,229,0.5);
+    }
+    .stButton > button:active { transform: translateY(0); }
+
+    /* Inputs & uploader */
+    .stTextInput input, .stChatInput textarea {
+        border-radius: 12px !important;
+        border: 1px solid rgba(129,140,248,0.25) !important;
+    }
+    section[data-testid="stFileUploaderDropzone"] {
+        border: 1px dashed rgba(129,140,248,0.35) !important;
+        border-radius: 16px !important;
+        background: rgba(20,20,55,0.4) !important;
+    }
+
+    /* Chat bubbles refinement */
+    .chat-user, .chat-bot { animation: mbFadeUp .35s ease-out both; line-height:1.55; }
+
+    /* Tabs */
+    button[data-baseweb="tab"] { font-weight: 600; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.4); border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.6); }
+
+    @keyframes mbFadeUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        *, .mb-hero, .mb-stat, .summary-card, .result-card, .chat-user, .chat-bot {
+            animation: none !important; transition: none !important;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
 
 # ─── Session State Initialization ──────────────────────────────────
 if "conversation_memory" not in st.session_state:
@@ -286,6 +444,37 @@ with st.sidebar:
 # ─── MAIN AREA ─────────────────────────────────────────────────────
 labels = UI_LABELS.get(language, UI_LABELS["English"])
 
+# ─── Hero header (presentation only) ───────────────────────────────
+if language == "English":
+    _trust_items = [
+        ("🔒", "Private — processed in memory"),
+        ("📚", "Grounded in MedlinePlus"),
+        ("🧪", "RAG + hallucination check"),
+        ("⚕️", "Explains, never diagnoses"),
+    ]
+else:
+    _trust_items = [
+        ("🔒", "निजी — मेमोरी में संसाधित"),
+        ("📚", "MedlinePlus पर आधारित"),
+        ("🧪", "RAG + तथ्य जाँच"),
+        ("⚕️", "समझाता है, निदान नहीं"),
+    ]
+_trust_html = "".join(
+    f'<span class="mb-trust-item">{_ic} {_tx}</span>' for _ic, _tx in _trust_items
+)
+st.markdown(f"""
+<div class="mb-hero">
+    <div class="mb-hero-row">
+        <div class="mb-logo">🩺</div>
+        <div>
+            <p class="mb-hero-title">MedBuddy</p>
+            <p class="mb-hero-sub">{labels['app_subtitle']}</p>
+        </div>
+    </div>
+    <div class="mb-trust">{_trust_html}</div>
+</div>
+""", unsafe_allow_html=True)
+
 tab1, tab2 = st.tabs([labels["tab1_title"], labels["tab2_title"]])
 
 
@@ -305,6 +494,25 @@ with tab1:
         )
     with col2:
         explain_clicked = st.button(labels["explain_button"], key="explain_btn", use_container_width=True)
+
+    # Empty state with example terms (presentation only)
+    if not (explain_clicked and term_input):
+        _examples = ["Hemoglobin", "HbA1c", "eGFR", "LDL Cholesterol", "TSH", "Vitamin D", "Creatinine"]
+        _chips = "".join(f'<span class="mb-chip">{_t}</span>' for _t in _examples)
+        _et_title = "Ask about any lab term" if language == "English" else "किसी भी लैब शब्द के बारे में पूछें"
+        _et_text = (
+            "Type a test name above and MedBuddy explains it in plain language, grounded in MedlinePlus."
+            if language == "English"
+            else "ऊपर कोई जांच नाम लिखें — MedBuddy इसे सरल भाषा में समझाएगा।"
+        )
+        st.markdown(f"""
+        <div class="mb-empty">
+            <div class="mb-empty-icon">🔍</div>
+            <div class="mb-empty-title">{_et_title}</div>
+            <div class="mb-empty-text">{_et_text}</div>
+            <div class="mb-chips">{_chips}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
     if explain_clicked and term_input:
         with st.spinner("🔍 Analyzing..." if language == "English" else "🔍 विश्लेषण कर रहे हैं..."):
@@ -502,6 +710,31 @@ with tab2:
                 except:
                     pass
 
+    # Nudge + empty state (presentation only)
+    if analyze_clicked and not uploaded_file:
+        st.warning(
+            "⚠️ Please upload a PDF lab report first." if language == "English"
+            else "⚠️ कृपया पहले एक PDF रिपोर्ट अपलोड करें।"
+        )
+    elif not st.session_state.report_analyzed and not (analyze_clicked and uploaded_file):
+        if language == "English":
+            _u_title = "Upload a lab report to begin"
+            _u_text = "MedBuddy reads digital or scanned PDFs, flags each value, and explains your results — then answers your questions."
+            _u_steps = ["1 · Upload PDF", "2 · Instant summary", "3 · Ask questions"]
+        else:
+            _u_title = "शुरू करने के लिए रिपोर्ट अपलोड करें"
+            _u_text = "MedBuddy डिजिटल या स्कैन की गई PDF पढ़ता है, हर मान को फ़्लैग करता है और आपके परिणाम समझाता है।"
+            _u_steps = ["1 · अपलोड", "2 · सारांश", "3 · सवाल पूछें"]
+        _u_chips = "".join(f'<span class="mb-chip">{_s}</span>' for _s in _u_steps)
+        st.markdown(f"""
+        <div class="mb-empty">
+            <div class="mb-empty-icon">📄</div>
+            <div class="mb-empty-title">{_u_title}</div>
+            <div class="mb-empty-text">{_u_text}</div>
+            <div class="mb-chips">{_u_chips}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
     # ─── Display Results (persisted in session state) ──────────────
     if st.session_state.report_analyzed:
         # Method badge
@@ -510,6 +743,27 @@ with tab2:
             st.markdown(f'<span class="badge-digital">{labels["digital_badge"]}</span>', unsafe_allow_html=True)
         elif method in ("ocr", "hybrid"):
             st.markdown(f'<span class="badge-ocr">{labels["ocr_badge"]}</span>', unsafe_allow_html=True)
+
+        # ─── At-a-glance stats (derived from existing flags, no new logic) ───
+        _ents = st.session_state.report_entities or []
+        if _ents:
+            _flags = [e.get("flag", "UNKNOWN") for e in _ents]
+            _n_total = len(_flags)
+            _n_norm = _flags.count("NORMAL")
+            _n_bord = _flags.count("BORDERLINE")
+            _n_crit = _flags.count("CRITICAL")
+            if language == "English":
+                _sl = ("Tests found", "Normal", "Borderline", "Needs attention")
+            else:
+                _sl = ("कुल जांच", "सामान्य", "सीमारेखा", "ध्यान दें")
+            st.markdown(f"""
+            <div class="mb-stat-grid">
+                <div class="mb-stat total"><div class="mb-stat-num">{_n_total}</div><div class="mb-stat-label">{_sl[0]}</div></div>
+                <div class="mb-stat normal"><div class="mb-stat-num">{_n_norm}</div><div class="mb-stat-label">{_sl[1]}</div></div>
+                <div class="mb-stat border"><div class="mb-stat-num">{_n_bord}</div><div class="mb-stat-label">{_sl[2]}</div></div>
+                <div class="mb-stat crit"><div class="mb-stat-num">{_n_crit}</div><div class="mb-stat-label">{_sl[3]}</div></div>
+            </div>
+            """, unsafe_allow_html=True)
 
         # ─── Summary Card ──────────────────────────────────────
         st.markdown(f"""
@@ -601,3 +855,19 @@ with tab2:
 
             # Rerun to show the new messages
             st.rerun()
+
+
+# ─── Footer (presentation only) ────────────────────────────────────
+if language == "English":
+    _foot = (
+        "<b>MedBuddy</b> — understand your health in plain language &nbsp;·&nbsp; "
+        "Research-backed methodology (IEEE ESCI 2026)<br>"
+        "Educational use only — MedBuddy explains lab results and does <b>not</b> diagnose or "
+        "prescribe. Always consult a qualified doctor."
+    )
+else:
+    _foot = (
+        "<b>MedBuddy</b> — अपनी सेहत को सरल भाषा में समझें<br>"
+        "केवल शैक्षिक उपयोग — MedBuddy निदान या उपचार नहीं देता। कृपया किसी योग्य डॉक्टर से सलाह लें।"
+    )
+st.markdown(f'<div class="mb-footer">{_foot}</div>', unsafe_allow_html=True)
