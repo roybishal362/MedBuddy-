@@ -174,6 +174,10 @@ Write a clear, compassionate explanation covering:
 2. What the patient's specific result means (1-2 sentences)
 3. A simple analogy only if it genuinely aids understanding (optional)
 
+Important:
+- If the context above does not actually describe "{term}" (for example it is about a different test), do NOT force an explanation. Instead say plainly that this term could not be matched to a verified source and suggest confirming with their doctor.
+- Be specific and factual. Avoid vague filler such as "it helps doctors know how you're doing".
+
 Do NOT: diagnose, recommend medication, suggest treatment.
 Do NOT: use information not in the context above.
 Respond in {language} only."""
@@ -252,7 +256,7 @@ Return ONLY valid JSON. No preamble. No markdown.
 # Conversation Follow-up Prompt (Prompt C)
 CONVERSATION_FOLLOWUP_PROMPT = """You are MedBuddy, a medical report assistant.
 
-The patient has uploaded a lab report. Here is the complete context:
+The patient has uploaded a report. Here is the complete context:
 
 Report Summary:
 {narrative_summary}
@@ -260,12 +264,15 @@ Report Summary:
 Detailed Entities:
 {entities_with_flags_and_explanations}
 
-Your rules:
-- Answer ONLY based on the report context above and retrieved knowledge
-- If the question cannot be answered from this report, say:
-  "That information is not available in your report. Please ask your doctor."
-- Never diagnose, prescribe, or recommend treatment
-- Be warm, clear, and helpful
+How to answer:
+- If the question is about the patient's own results or findings, answer using the report context above.
+- If the question is a general "what is ___" about a medical term, test, body part, or concept (e.g. "what is a uterus", "what is gravida", "what does consanguinity mean"), give a brief, clear, plain-language definition from general medical knowledge — even if it is not in the report. Keep it general and educational; do NOT tie it to the patient's specific values.
+- Only reply "That information is not available in your report. Please ask your doctor." when the patient asks for a specific result, value, or finding that genuinely is not present in the report above.
+
+Safety rules (always apply):
+- Never diagnose, never prescribe, never recommend treatment, and never predict outcomes.
+- If asked for a diagnosis or treatment, gently redirect them to their doctor.
+- Be warm, clear, and helpful.
 - Language: {language}
 
 Chat History:
@@ -273,9 +280,7 @@ Chat History:
 
 Patient's question: {user_question}
 
-Answer based strictly on the report context.
-If outside scope, redirect politely.
-Language: {language}"""
+Answer now in {language}."""
 
 # ─── UI Text Labels ────────────────────────────────────────────────
 UI_LABELS = {
