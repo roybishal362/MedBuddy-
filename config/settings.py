@@ -45,26 +45,28 @@ LITERACY_WORD_LIMITS = {
 }
 
 # ─── Refusal Trigger Keywords ──────────────────────────────────────
+# Personal-advice intent only. Defining a treatment/medication/condition is
+# allowed (educational); recommending one FOR THE USER is refused.
 REFUSAL_KEYWORDS = [
-    "diagnose", "diagnosis", "what disease", "what condition",
-    "prescribe", "prescription", "medicine", "medication", "drug",
-    "treatment", "therapy", "cure", "what should i do",
-    "should i take", "recommend", "suggest treatment",
-    "do i have", "is this cancer", "am i sick"
+    "diagnose me", "diagnose my", "what disease do i", "what condition do i",
+    "prescribe", "prescription for", "what should i do", "what should i take",
+    "should i take", "should i stop", "do i have", "is this cancer",
+    "am i sick", "recommend treatment", "recommend a medicine", "cure for my",
+    "how do i treat", "how to treat my", "which medicine should",
 ]
 
 # ─── Refusal Response Templates ────────────────────────────────────
 REFUSAL_RESPONSE = {
     "English": (
-        "MedBuddy is designed to help you understand what your lab results mean in "
-        "plain language. For medical advice, diagnosis, or treatment decisions, please "
-        "consult a qualified healthcare professional. I'm happy to explain any specific "
-        "term or result from your report."
+        "MedBuddy is designed to help you understand medical terms and reports in "
+        "plain language. For personal medical advice, diagnosis, or treatment decisions, "
+        "please consult a qualified healthcare professional. I'm happy to explain what any "
+        "medical word, test, condition, or result means."
     ),
     "Hindi": (
-        "MedBuddy आपकी लैब रिपोर्ट को सरल भाषा में समझने में मदद करता है। "
-        "चिकित्सा सलाह, निदान, या उपचार के लिए कृपया किसी योग्य स्वास्थ्य पेशेवर से परामर्श करें। "
-        "मैं आपकी रिपोर्ट के किसी भी विशिष्ट शब्द या परिणाम को समझाने में खुश हूँ।"
+        "MedBuddy चिकित्सा शब्दों और रिपोर्ट को सरल भाषा में समझने में मदद करता है। "
+        "व्यक्तिगत चिकित्सा सलाह, निदान, या उपचार के लिए कृपया किसी योग्य स्वास्थ्य पेशेवर से परामर्श करें। "
+        "मैं किसी भी चिकित्सा शब्द, जांच, स्थिति या परिणाम का अर्थ समझाने में खुश हूँ।"
     )
 }
 
@@ -74,9 +76,9 @@ REFUSAL_RESPONSE = {
 INTENT_CLASSIFIER_PROMPT = """You are a medical query intent classifier.
 
 Classify the following user query into exactly one category:
-1. MEDICAL_TERM — the query asks about a valid lab test or medical term (e.g., Hemoglobin, eGFR, HbA1c, LDL, creatinine)
-2. REPORT_QUESTION — the query asks about a medical report without uploading one (e.g., "what does my report say?")
-3. OUT_OF_SCOPE — the query asks for diagnosis, treatment, medication, or is unrelated to medical lab terms
+1. MEDICAL_TERM — the query asks what a medical or health term means: a lab test, a disease/condition, body part/anatomy, a symptom, a medical procedure, an imaging scan, a medication or treatment as a concept, or any general health term (e.g., Hemoglobin, Hypertension, MRI, Biopsy, Tachycardia, Edema, Chemotherapy, Cholelithiasis)
+2. REPORT_QUESTION — the query asks about the patient's own medical report when none has been uploaded (e.g., "what does my report say?")
+3. OUT_OF_SCOPE — the query asks for PERSONAL medical advice (a diagnosis for the user, a treatment/medication recommendation for the user, "what should I do", "do I have X"), or is not about medicine or health at all
 
 User query: {query}
 
@@ -198,9 +200,9 @@ Write a brief explanation. Begin your response with:
 Do NOT diagnose or recommend treatment."""
 
 # Dictionary-Style Term Explanation (Mode 1, no patient value) — RAG-grounded
-TERM_DICTIONARY_PROMPT = """System: You are MedBuddy, explaining a medical lab test to a patient who simply asked what it means — like a friendly medical dictionary. The patient has NOT given their own result value, so do NOT refer to "your result", do NOT invent a patient value, and do NOT ask them for one.
+TERM_DICTIONARY_PROMPT = """System: You are MedBuddy, explaining a medical term to a patient who simply asked what it means — like a friendly medical dictionary. The term may be a lab test, a condition or disease, a body part, a symptom, a procedure, an imaging scan, or any health concept. The patient has NOT given a personal result, so do NOT refer to "your result", do NOT invent a value, and do NOT ask them for one.
 
-Context (from MedlinePlus):
+Context (reference):
 {retrieved_context}
 
 Medical term: {term}
@@ -209,28 +211,26 @@ Literacy Level instruction: {literacy_level_description}
 Language: {language}
 
 Write a clear, compassionate explanation covering:
-1. What this test measures and why it is done (1-2 simple sentences)
-2. The typical normal / reference range for a healthy adult. If the context provides a range, use it. Otherwise give the commonly used adult range and note that ranges vary by lab, age, and sex.
-3. A simple analogy ONLY if it genuinely aids understanding (optional).
+1. What "{term}" means in simple words — what it is or what it refers to.
+2. Why it matters or what it is used for (1-2 sentences).
+3. ONLY if "{term}" is a measurable lab test, also give the typical normal / reference range for a healthy adult, and note that ranges vary by lab, age, and sex. If it is a condition, body part, symptom, or procedure, skip the range.
+4. A simple analogy ONLY if it genuinely aids understanding (optional).
 
-Do NOT: diagnose, recommend medication or treatment, or invent a patient result.
-Prefer information supported by the context above.
+Do NOT: diagnose the patient, recommend medication or treatment for them, or invent a personal result.
+Prefer information supported by the context above; if the context does not fit "{term}", use your own general medical knowledge.
 Respond in {language} only."""
 
-# Dictionary-Style Term Explanation (Mode 1, no patient value) — Tier 3 fallback
-TERM_DICTIONARY_FALLBACK_PROMPT = """System: You are MedBuddy, a medical communication specialist explaining a lab test like a friendly dictionary. The patient has NOT given a result value, so do NOT refer to a patient-specific value or ask for one.
-This term was not found in the verified knowledge base. Provide a careful general explanation from your knowledge.
+# Dictionary-Style Term Explanation (Mode 1, no patient value) — Tier 4 fallback
+TERM_DICTIONARY_FALLBACK_PROMPT = """System: You are MedBuddy, a medical communication specialist explaining a medical term like a friendly dictionary. The term may be a lab test, condition, body part, symptom, procedure, or any health concept. The patient has NOT given a personal result, so do NOT refer to a personal value or ask for one.
 
 Medical term: {term}
 Literacy Level: {literacy_level_description}
 Language: {language}
 
-Begin your response with:
-"[Note: This explanation is based on general medical knowledge and has not been verified against a certified source. Please confirm with your doctor.]"
-
-Then cover:
-1. What this test measures and why it is done (simple)
-2. The typical normal / reference range for a healthy adult (note that ranges vary by lab, age, and sex)
+Cover:
+1. What "{term}" means in simple words.
+2. Why it matters or what it is used for.
+3. ONLY if "{term}" is a measurable lab test, give the typical normal range (note that ranges vary by lab, age, and sex); otherwise skip the range.
 
 Do NOT diagnose or recommend treatment. Respond in {language} only."""
 
@@ -330,7 +330,7 @@ UI_LABELS = {
         "language_label": "Language",
         "tab1_title": "🔍 Ask a Term",
         "tab2_title": "📄 Upload Report",
-        "term_input_placeholder": "Enter a medical term (e.g. Hemoglobin, eGFR, HbA1c)...",
+        "term_input_placeholder": "Enter any medical term (e.g. Hemoglobin, Hypertension, MRI, Biopsy)...",
         "explain_button": "Explain",
         "upload_label": "Upload your lab report (PDF or image)",
         "analyze_button": "🔬 Analyze Report",
@@ -342,8 +342,9 @@ UI_LABELS = {
         "download_button": "📥 Download Summary as PDF",
         "about_title": "ℹ️ About MedBuddy",
         "about_text": (
-            "MedBuddy helps you understand your medical lab reports in plain language. "
-            "It does NOT provide medical advice, diagnosis, or treatment recommendations."
+            "MedBuddy helps you understand any medical term or report — lab tests, "
+            "conditions, scans, procedures — in plain language. It does NOT provide "
+            "medical advice, diagnosis, or treatment recommendations."
         ),
         "col_test": "Test",
         "col_value": "Your Value",
@@ -369,7 +370,7 @@ UI_LABELS = {
         "language_label": "भाषा",
         "tab1_title": "🔍 शब्द पूछें",
         "tab2_title": "📄 रिपोर्ट अपलोड करें",
-        "term_input_placeholder": "एक मेडिकल शब्द दर्ज करें (जैसे हीमोग्लोबिन, eGFR, HbA1c)...",
+        "term_input_placeholder": "कोई भी चिकित्सा शब्द दर्ज करें (जैसे हीमोग्लोबिन, हाइपरटेंशन, MRI, बायोप्सी)...",
         "explain_button": "समझाएं",
         "upload_label": "अपनी लैब रिपोर्ट अपलोड करें (PDF या इमेज)",
         "analyze_button": "🔬 रिपोर्ट का विश्लेषण करें",
@@ -381,8 +382,8 @@ UI_LABELS = {
         "download_button": "📥 सारांश PDF डाउनलोड करें",
         "about_title": "ℹ️ MedBuddy के बारे में",
         "about_text": (
-            "MedBuddy आपकी मेडिकल लैब रिपोर्ट को सरल भाषा में समझने में मदद करता है। "
-            "यह चिकित्सा सलाह, निदान या उपचार की सिफारिश नहीं करता।"
+            "MedBuddy किसी भी चिकित्सा शब्द या रिपोर्ट — जांच, स्थिति, स्कैन, प्रक्रिया — को "
+            "सरल भाषा में समझने में मदद करता है। यह चिकित्सा सलाह, निदान या उपचार की सिफारिश नहीं करता।"
         ),
         "col_test": "जांच",
         "col_value": "आपका मान",

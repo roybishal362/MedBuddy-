@@ -464,8 +464,8 @@ with st.sidebar:
         st.markdown(labels["about_text"])
         st.markdown("---")
         st.markdown("**Tech Stack:**")
-        st.markdown("• LLM: Groq API (LLaMA 3.3 + Mixtral)")
-        st.markdown("• RAG: FAISS + MedlinePlus")
+        st.markdown("• LLM: Groq API (LLaMA 3.3 + Qwen)")
+        st.markdown("• Retrieval: FAISS + MedlinePlus + Wikipedia (live)")
         st.markdown("• OCR: PyMuPDF + Tesseract")
         st.markdown("• Framework: LangChain + Streamlit")
 
@@ -542,11 +542,13 @@ with tab1:
 
     # Empty state + clickable example terms
     if not _do_explain:
-        _et_title = "Ask about any lab term" if language == "English" else "किसी भी लैब शब्द के बारे में पूछें"
+        _et_title = "Ask about any medical term" if language == "English" else "किसी भी चिकित्सा शब्द के बारे में पूछें"
         _et_text = (
-            "Type a test name above (or tap an example) and MedBuddy explains it in plain language."
+            "Lab tests, conditions, scans, procedures, symptoms — type any medical word "
+            "(or tap an example) and MedBuddy explains it in plain language."
             if language == "English"
-            else "ऊपर कोई जांच नाम लिखें (या उदाहरण पर टैप करें) — MedBuddy इसे सरल भाषा में समझाएगा।"
+            else "जांच, स्थिति, स्कैन, प्रक्रिया, लक्षण — कोई भी चिकित्सा शब्द लिखें "
+                 "(या उदाहरण पर टैप करें) और MedBuddy इसे सरल भाषा में समझाएगा।"
         )
         st.markdown(f"""
         <div class="mb-empty">
@@ -556,7 +558,7 @@ with tab1:
         </div>
         """, unsafe_allow_html=True)
 
-        _examples = ["Hemoglobin", "HbA1c", "eGFR", "LDL Cholesterol", "TSH", "Vitamin D", "Creatinine"]
+        _examples = ["Hemoglobin", "Hypertension", "MRI", "Biopsy", "Tachycardia", "HbA1c", "Edema"]
         _ex_cols = st.columns(len(_examples))
         for _c, _t in zip(_ex_cols, _examples):
             _c.button(
