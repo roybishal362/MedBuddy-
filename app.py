@@ -27,6 +27,7 @@ from core.report_summarizer import summarize
 from core.entity_extractor import extract_entities
 from core.value_contextualizer import add_flags_to_entities
 from core.conversation_memory import ConversationMemory
+from core.narrative_report import classify_report_kind, analyze_narrative
 
 # ─── Page Configuration ────────────────────────────────────────────
 st.set_page_config(
@@ -336,6 +337,12 @@ if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
 if "report_text" not in st.session_state:
     st.session_state.report_text = ""
+if "report_kind" not in st.session_state:
+    st.session_state.report_kind = ""
+if "report_findings" not in st.session_state:
+    st.session_state.report_findings = []
+if "report_glossary" not in st.session_state:
+    st.session_state.report_glossary = []
 
 
 def parse_value_unit(text: str):
@@ -593,6 +600,8 @@ with tab1:
                     source_display = "MedlinePlus (cached)"
                 elif source_display == "MedlinePlus_live":
                     source_display = "MedlinePlus (live)"
+                elif source_display == "Wikipedia":
+                    source_display = "Wikipedia (live)"
                 elif source_display == "LLM_fallback":
                     source_display = "AI Knowledge"
 
@@ -622,7 +631,8 @@ with tab1:
 
                 # Source URL link
                 if rag_result.get("source_url"):
-                    st.markdown(f"🔗 [MedlinePlus Source]({rag_result['source_url']})")
+                    _src_name = "Wikipedia" if rag_result.get("source") == "Wikipedia" else "MedlinePlus"
+                    st.markdown(f"🔗 [{_src_name} Source]({rag_result['source_url']})")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -695,57 +705,81 @@ with tab2:
                 else:
                     st.markdown(f'<span class="badge-ocr">{labels["ocr_badge"]}</span>', unsafe_allow_html=True)
 
-                # ─── STEP 2: Report Analysis ────────────────────────
-                analysis = analyze(report_text)
+                # ─── STEP 2: Decide how to process this report ──────
+                report_kind = classify_report_kind(report_text)
+                st.session_state.report_kind = report_kind
 
-                # ─── STEP 3: Report Summary (Prompt A) ──────────────
-                summary = summarize(
-                    structured_report_text=report_text,
-                    report_analyzer_output=analysis,
-                    literacy_level=literacy_level,
-                    language=language
-                )
-                st.session_state.report_summary = summary
+                if report_kind == "LAB":
+                    # ===== LAB pipeline (published methodology, unchanged) =====
+                    analysis = analyze(report_text)
 
-                # ─── STEP 4: Entity Extraction (Prompt B) ───────────
-                entities = extract_entities(report_text)
-
-                # ─── STEP 5: Value Contextualization ────────────────
-                entities = add_flags_to_entities(entities)
-
-                # ─── STEP 6: RAG Explanation for each entity ────────
-                for entity in entities:
-                    rag_result = retrieve(entity["term"])
-                    explain_result = explain(
-                        term=entity["term"],
-                        value=entity.get("patient_value", ""),
-                        unit=entity.get("unit", ""),
-                        ref_range=entity.get("reference_range", ""),
-                        flag=entity.get("flag", ""),
-                        rag_result=rag_result,
+                    summary = summarize(
+                        structured_report_text=report_text,
+                        report_analyzer_output=analysis,
                         literacy_level=literacy_level,
                         language=language
                     )
-                    entity["explanation"] = explain_result["explanation"]
-                    entity["source"] = explain_result["source"]
-                    entity["disclaimer"] = explain_result.get("disclaimer", False)
+                    st.session_state.report_summary = summary
 
-                    # Hallucination verification for Tier 1 & 2
-                    if not explain_result.get("disclaimer") and rag_result.get("context"):
-                        verification = verify(rag_result["context"], explain_result["explanation"])
-                        entity["grounding_score"] = verification.get("grounding_score")
-                        entity["verification_verdict"] = verification.get("verdict")
-                    else:
-                        entity["grounding_score"] = None
-                        entity["verification_verdict"] = None
+                    entities = extract_entities(report_text)
+                    entities = add_flags_to_entities(entities)
 
-                st.session_state.report_entities = entities
+                    for entity in entities:
+                        rag_result = retrieve(entity["term"])
+                        explain_result = explain(
+                            term=entity["term"],
+                            value=entity.get("patient_value", ""),
+                            unit=entity.get("unit", ""),
+                            ref_range=entity.get("reference_range", ""),
+                            flag=entity.get("flag", ""),
+                            rag_result=rag_result,
+                            literacy_level=literacy_level,
+                            language=language
+                        )
+                        entity["explanation"] = explain_result["explanation"]
+                        entity["source"] = explain_result["source"]
+                        entity["disclaimer"] = explain_result.get("disclaimer", False)
 
-                # ─── STEP 7: Initialize Conversation Memory ────────
-                st.session_state.conversation_memory.set_report_context(
-                    narrative_summary=summary,
-                    entities_with_flags=entities
-                )
+                        # Hallucination verification for grounded tiers
+                        if not explain_result.get("disclaimer") and rag_result.get("context"):
+                            verification = verify(rag_result["context"], explain_result["explanation"])
+                            entity["grounding_score"] = verification.get("grounding_score")
+                            entity["verification_verdict"] = verification.get("verdict")
+                        else:
+                            entity["grounding_score"] = None
+                            entity["verification_verdict"] = None
+
+                    st.session_state.report_entities = entities
+                    st.session_state.report_findings = []
+                    st.session_state.report_glossary = []
+
+                    st.session_state.conversation_memory.set_report_context(
+                        narrative_summary=summary,
+                        entities_with_flags=entities
+                    )
+
+                else:
+                    # ===== NARRATIVE pipeline (imaging / pathology / notes) =====
+                    narr = analyze_narrative(report_text, literacy_level, language)
+                    st.session_state.report_summary = narr["summary"]
+                    st.session_state.report_entities = []
+                    st.session_state.report_findings = narr["findings"]
+                    st.session_state.report_glossary = narr["glossary"]
+
+                    # Give the chat context: findings + glossary as pseudo-entities
+                    pseudo_entities = [
+                        {"term": f["finding"], "patient_value": "", "unit": "",
+                         "reference_range": "", "flag": "", "explanation": f["meaning"]}
+                        for f in narr["findings"]
+                    ] + [
+                        {"term": g["term"], "patient_value": "", "unit": "",
+                         "reference_range": "", "flag": "", "explanation": g["definition"]}
+                        for g in narr["glossary"]
+                    ]
+                    st.session_state.conversation_memory.set_report_context(
+                        narrative_summary=narr["summary"],
+                        entities_with_flags=pseudo_entities
+                    )
 
                 st.session_state.report_analyzed = True
 
@@ -768,8 +802,8 @@ with tab2:
         )
     elif not st.session_state.report_analyzed and not (analyze_clicked and uploaded_file):
         if language == "English":
-            _u_title = "Upload a lab report to begin"
-            _u_text = "MedBuddy reads PDFs or photos of your report, flags each value, and explains your results — then answers your questions."
+            _u_title = "Upload any report to begin"
+            _u_text = "Lab tests, ultrasound, X-ray, CT, MRI, pathology — MedBuddy reads PDFs or photos, explains them in plain language, and answers your questions."
             _u_steps = ["1 · Upload PDF / image", "2 · Instant summary", "3 · Ask questions"]
         else:
             _u_title = "शुरू करने के लिए रिपोर्ट अपलोड करें"
@@ -824,6 +858,31 @@ with tab2:
         </div>
         """, unsafe_allow_html=True)
 
+        # ─── Narrative Findings (imaging / pathology / notes) ──────
+        _findings = st.session_state.get("report_findings", [])
+        if _findings:
+            _f_header = "🔍 Key Findings Explained" if language == "English" else "🔍 मुख्य निष्कर्ष"
+            st.markdown(f"### {_f_header}")
+            for _f in _findings:
+                st.markdown(f"""
+                <div class="result-card">
+                    <h4 style="margin: 0 0 6px 0;">{_f.get('finding', '')}</h4>
+                    <div class="explanation-card">{_f.get('meaning', '')}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # ─── Glossary (terms found in the report) ──────────────────
+        _glossary = st.session_state.get("report_glossary", [])
+        if _glossary:
+            _g_header = "📖 Glossary" if language == "English" else "📖 शब्दावली"
+            st.markdown(f"### {_g_header}")
+            for _g in _glossary:
+                st.markdown(f"""
+                <div class="result-card">
+                    <strong>{_g.get('term', '')}</strong> — {_g.get('definition', '')}
+                </div>
+                """, unsafe_allow_html=True)
+
         # ─── Detailed Results Table ────────────────────────────
         entities = st.session_state.report_entities
         if entities:
@@ -875,6 +934,18 @@ with tab2:
                     file_name="MedBuddy_Report_Summary.pdf",
                     mime="application/pdf",
                     key="download_pdf"
+                )
+
+        # ─── Download for narrative reports (summary-based) ────────
+        if not entities and (_findings or _glossary):
+            _pdf_narr = generate_pdf_summary(st.session_state.report_summary, [], labels)
+            if _pdf_narr:
+                st.download_button(
+                    labels["download_button"],
+                    data=_pdf_narr,
+                    file_name="MedBuddy_Report_Summary.pdf",
+                    mime="application/pdf",
+                    key="download_pdf_narrative"
                 )
 
         # ─── Conversational Q&A ────────────────────────────────

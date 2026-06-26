@@ -3,6 +3,7 @@ MedBuddy — RAG Retriever
 3-tier fallback: FAISS → MedlinePlus Live → LLM Fallback
 """
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -12,6 +13,29 @@ from config.settings import SIMILARITY_THRESHOLD, EMBEDDING_MODEL, FAISS_INDEX_P
 # Module-level cache for the FAISS index
 _faiss_store = None
 _embeddings = None
+
+# Generic words that should not by themselves prove a FAISS match is relevant
+_STOP_TOKENS = {
+    "test", "tests", "level", "levels", "blood", "serum", "count", "value",
+    "values", "total", "ratio", "the", "and", "of", "in", "for", "with", "report",
+}
+
+
+def _term_relevant(query: str, matched_term: str, content: str) -> bool:
+    """Guard against false FAISS matches (e.g. 'Cervix length' -> 'CEA').
+
+    Accept the match only if a meaningful token of the query actually appears
+    in the matched term or its content. Very short queries (codes like 'T3')
+    have no meaningful token to check, so we defer to the similarity score.
+    """
+    q_tokens = [
+        w for w in re.findall(r"[a-z0-9]+", (query or "").lower())
+        if len(w) >= 3 and w not in _STOP_TOKENS
+    ]
+    if not q_tokens:
+        return True  # nothing meaningful to verify; rely on similarity threshold
+    target = ((matched_term or "") + " " + (content or "")[:300]).lower()
+    return any(w in target for w in q_tokens)
 
 
 def _get_embeddings():
@@ -65,7 +89,10 @@ def retrieve(term: str) -> dict:
                 # Normalize: similarity = 1 / (1 + score)
                 similarity = 1 / (1 + score)
 
-                if similarity >= SIMILARITY_THRESHOLD:
+                matched_term = (top_doc.metadata or {}).get("term", "")
+                if similarity >= SIMILARITY_THRESHOLD and _term_relevant(
+                    term, matched_term, top_doc.page_content
+                ):
                     return {
                         "context": top_doc.page_content,
                         "source": "FAISS",
@@ -73,6 +100,7 @@ def retrieve(term: str) -> dict:
                         "source_url": top_doc.metadata.get("source_url"),
                         "disclaimer": False
                     }
+                # Weak or irrelevant match -> fall through to live tiers
         except Exception as e:
             print(f"[RAGRetriever] FAISS search error: {e}")
 
@@ -108,7 +136,23 @@ def retrieve(term: str) -> dict:
     except Exception as e:
         print(f"[RAGRetriever] Tier 2 (MedlinePlus live) error: {e}")
 
-    # ─── TIER 3: LLM general knowledge fallback ──────────────────
+    # ─── TIER 3: Live Wikipedia fetch (broad real-time coverage) ──
+    try:
+        from knowledge_base.wiki_fetcher import wikipedia_fetch
+        wiki_result = wikipedia_fetch(term)
+
+        if wiki_result and wiki_result.get("definition"):
+            return {
+                "context": wiki_result["definition"],
+                "source": "Wikipedia",
+                "score": None,
+                "source_url": wiki_result.get("source_url"),
+                "disclaimer": False
+            }
+    except Exception as e:
+        print(f"[RAGRetriever] Tier 3 (Wikipedia live) error: {e}")
+
+    # ─── TIER 4: LLM general knowledge fallback ──────────────────
     return {
         "context": None,
         "source": "LLM_fallback",

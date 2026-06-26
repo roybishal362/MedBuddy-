@@ -175,7 +175,7 @@ Write a clear, compassionate explanation covering:
 3. A simple analogy only if it genuinely aids understanding (optional)
 
 Important:
-- If the context above does not actually describe "{term}" (for example it is about a different test), do NOT force an explanation. Instead say plainly that this term could not be matched to a verified source and suggest confirming with their doctor.
+- If the context above does not actually describe "{term}" (for example it is about a different test), do NOT use it. Instead explain "{term}" accurately from your own general medical knowledge.
 - Be specific and factual. Avoid vague filler such as "it helps doctors know how you're doing".
 
 Do NOT: diagnose, recommend medication, suggest treatment.
@@ -281,6 +281,45 @@ Chat History:
 Patient's question: {user_question}
 
 Answer now in {language}."""
+
+# ─── Report Kind Classifier (LAB vs NARRATIVE) ─────────────────────
+REPORT_KIND_PROMPT = """You are a medical report classifier.
+
+Report (excerpt):
+{report_text}
+
+Classify the report into exactly one category. Return ONLY valid JSON. No markdown. No preamble.
+{{"kind": "<LAB|NARRATIVE>"}}
+
+Definitions:
+- LAB = a laboratory test report built around numeric results with reference ranges (e.g. CBC, lipid profile, liver/kidney panel, blood sugar, thyroid, urine values).
+- NARRATIVE = any report described mainly in words rather than numeric ranges: radiology / imaging (ultrasound, sonography, X-ray, CT, MRI), pathology or biopsy, discharge summary, prescription, or clinical notes."""
+
+# ─── Narrative Report Explainer (imaging / pathology / notes) ──────
+NARRATIVE_REPORT_PROMPT = """System: You are MedBuddy, helping a patient understand a medical report in plain language. This is a NARRATIVE report (for example an ultrasound / sonography, X-ray, CT, MRI, pathology / biopsy, discharge summary, or clinical note) — NOT a numeric lab panel.
+
+Report:
+{report_text}
+
+Literacy level instruction: {literacy_level_description}
+Respond in {language}.
+
+Return ONLY valid JSON. No markdown. No preamble.
+{{
+  "summary": "<3-5 sentence plain-language overview of what this report is and what it says — honest but not alarming>",
+  "findings": [
+    {{"finding": "<short label of a key finding stated in the report>", "meaning": "<1-2 sentence plain-language meaning, no diagnosis>"}}
+  ],
+  "glossary": [
+    {{"term": "<a medical or technical word that appears in the report>", "definition": "<one simple sentence defining it>"}}
+  ]
+}}
+
+Rules:
+- Use ONLY information present in the report for "summary" and "findings". Never invent findings.
+- "glossary" may use general medical knowledge to define terms that appear in the report.
+- Do NOT diagnose, do NOT recommend medication or treatment, do NOT predict outcomes.
+- Keep every explanation in plain {language}."""
 
 # ─── UI Text Labels ────────────────────────────────────────────────
 UI_LABELS = {
